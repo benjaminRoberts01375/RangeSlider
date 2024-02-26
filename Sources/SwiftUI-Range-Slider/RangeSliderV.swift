@@ -2,89 +2,98 @@
 // https://docs.swift.org/swift-book
 
 import SwiftUI
-enum Layout {
-    case vertical, horizontal
-}
+
+fileprivate enum DraggingHandle { case lower, upper }
 
 @available(iOS 13.0, *)
-private struct HorizontalRangeSlider<V: BinaryFloatingPoint>: View {
-    @Binding public var value: ClosedRange<V>
-    public var range: ClosedRange<V>
-    @State private var previousDragLoc: CGFloat = .zero
-    @State private var draggingHandle: DraggingHandle = .lower
-    let grabberSize: CGFloat = 27
+private struct HorizontalRangeSliderV<V: BinaryFloatingPoint>: View {
+    @Binding var value: ClosedRange<V>
+    let range: ClosedRange<V>
     
-    private enum DraggingHandle { case lower, upper }
-    
-    func updateValue(for translation: CGFloat, width: CGFloat) {
-        let diff = translation - previousDragLoc
+    func updateValue(width: CGFloat, diff: CGFloat, handle: DraggingHandle) {
         let newPosition = diff / width * CGFloat(range.upperBound)
-        
         var proposedLower = value.lowerBound
         var proposedUpper = value.upperBound
         
-        switch draggingHandle {
+        switch handle {
         case .lower: proposedLower = max(range.lowerBound, min(value.lowerBound + V(newPosition), value.upperBound))
         case .upper: proposedUpper = min(range.upperBound, max(value.upperBound + V(newPosition), value.lowerBound))
         }
         
         value = proposedLower...proposedUpper
-        previousDragLoc = translation
     }
     
     var body: some View {
         HStack(spacing: 0) {
-            Color.clear.frame(width: self.grabberSize, height: 0)
-            GeometryReader { geo in
-                ZStack {
-                    HStack(spacing: 0) {
-                        Capsule()
-                            .foregroundColor(.gray.opacity(0.3))
-                            .frame(width: CGFloat(value.lowerBound / range.upperBound) * geo.size.width)
-                        
-                        Rectangle()
-                            .foregroundColor(.accentColor)
-                            .frame(width: CGFloat(value.upperBound - value.lowerBound) / CGFloat(range.upperBound) * geo.size.width)
-                        
-                        Capsule().foregroundColor(.gray.opacity(0.3))
+            Color.clear.frame(width: GrabberV.grabberSize, height: 0)
+            ZStack {
+                GeometryReader { geo in
+                    ZStack(alignment: .center) {
+                        HorizontalSliderTrackV(value: value, range: range)
+                        Group {
+                            let offsetFix = geo.size.width / 2 - GrabberV.grabberSize / 2
+                            GrabberV(draggingHandle: .lower, updateValue: updateValue, width: geo.size.width)
+                                .offset(x: CGFloat(value.lowerBound / range.upperBound) * geo.size.width - offsetFix)
+                            GrabberV(draggingHandle: .upper, updateValue: updateValue, width: geo.size.width)
+                                .offset(x: CGFloat(value.upperBound / range.upperBound) * geo.size.width - geo.size.width / 2 + GrabberV.grabberSize / 2)
+                        }
+                        .frame(width: GrabberV.grabberSize, height: GrabberV.grabberSize)
+                        .foregroundColor(.white)
                     }
-                    .frame(height: 4)
-                    ZStack {
-                        Circle()
-                            .gesture(
-                                DragGesture(coordinateSpace: .global)
-                                    .onChanged { update in
-                                        draggingHandle = .lower
-                                        updateValue(for: update.translation.width, width: geo.size.width)
-                                    }
-                                    .onEnded { _ in
-                                        previousDragLoc = .zero
-                                    }
-                            )
-                            .offset(x: CGFloat(value.lowerBound / range.upperBound) * geo.size.width - geo.size.width / 2 - self.grabberSize / 2)
-                            .shadow(color: .black.opacity(0.2), radius: 2, y: 2)
-                        
-                        Circle()
-                            .gesture(
-                                DragGesture(coordinateSpace: .global)
-                                    .onChanged { update in
-                                        draggingHandle = .upper
-                                        updateValue(for: update.translation.width, width: geo.size.width)
-                                    }
-                                    .onEnded { _ in
-                                        previousDragLoc = .zero
-                                    }
-                            )
-                            .offset(x: CGFloat(value.upperBound / range.upperBound) * geo.size.width - geo.size.width / 2 + self.grabberSize / 2)
-                            .shadow(color: .black.opacity(0.2), radius: 2, y: 2)
-                    }
-                    .frame(width: self.grabberSize, height: self.grabberSize)
-                    .foregroundColor(.white)
                 }
             }
-            .frame(height: self.grabberSize)
-            Color.clear.frame(width: self.grabberSize, height: 0)
+            .frame(height: GrabberV.grabberSize)
+            Color.clear.frame(width: GrabberV.grabberSize, height: 0)
         }
+    }
+}
+
+@available(iOS 13.0, *)
+fileprivate struct HorizontalSliderTrackV<V: BinaryFloatingPoint>: View {
+    let value: ClosedRange<V>
+    let range: ClosedRange<V>
+    
+    var body: some View {
+        GeometryReader { geo in
+            HStack(spacing: 0) {
+                Capsule()
+                    .foregroundColor(.gray.opacity(0.3))
+                    .frame(width: CGFloat(value.lowerBound / range.upperBound) * geo.size.width)
+                
+                Rectangle()
+                    .foregroundColor(.accentColor)
+                    .frame(width: CGFloat(value.upperBound - value.lowerBound) / CGFloat(range.upperBound) * geo.size.width)
+                
+                Capsule().foregroundColor(.gray.opacity(0.3))
+            }
+        }
+        .frame(height: 4)
+    }
+}
+
+@available(iOS 13.0, *)
+fileprivate struct GrabberV: View {
+    var draggingHandle: DraggingHandle
+    var updateValue: (CGFloat, CGFloat, DraggingHandle) -> Void
+    @GestureState var dragAmount: CGSize = .zero
+    static let grabberSize: CGFloat = 27
+    @State var previousDragAmount: CGFloat = .zero
+    let width: CGFloat
+    
+    var body: some View {
+        Circle()
+            .shadow(color: .black.opacity(0.2), radius: 3, y: 2)
+            .gesture(
+                DragGesture(coordinateSpace: .global)
+                    .onChanged { update in
+                        let diff = update.translation.width - previousDragAmount
+                        updateValue(width, diff, draggingHandle)
+                        previousDragAmount = update.translation.width
+                    }
+                    .onEnded { _ in
+                        previousDragAmount = .zero
+                    }
+            )
     }
 }
 
@@ -94,7 +103,7 @@ struct ContentView_Previews : PreviewProvider {
         @State var baseValue: ClosedRange<Double> = 2...10
         var range: ClosedRange<Double> = 0...10
         var body: some View {
-            HorizontalRangeSlider(value: $baseValue, range: range)
+            HorizontalRangeSliderV(value: $baseValue, range: range)
         }
     }
     
