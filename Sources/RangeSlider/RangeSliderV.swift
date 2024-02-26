@@ -3,12 +3,17 @@
 
 import SwiftUI
 
-fileprivate enum DraggingHandle { case lower, upper }
+internal enum DraggingHandle { case lower, upper }
 
 @available(iOS 13.0, *)
-private struct HorizontalRangeSliderV<V: BinaryFloatingPoint>: View {
+public struct HorizontalRangeSliderV<V: BinaryFloatingPoint>: View {
     @Binding var value: ClosedRange<V>
     let range: ClosedRange<V>
+    
+    public init(value: Binding<ClosedRange<V>>, range: ClosedRange<V>) {
+        self._value = value
+        self.range = range
+    }
     
     func updateValue(width: CGFloat, diff: CGFloat, handle: DraggingHandle) {
         let newPosition = diff / width * CGFloat(range.upperBound)
@@ -23,7 +28,7 @@ private struct HorizontalRangeSliderV<V: BinaryFloatingPoint>: View {
         value = proposedLower...proposedUpper
     }
     
-    var body: some View {
+    public var body: some View {
         HStack(spacing: 0) {
             Color.clear.frame(width: GrabberV.grabberSize, height: 0)
             ZStack {
