@@ -38,7 +38,7 @@ public struct HorizontalRangeSliderV<V: BinaryFloatingPoint>: View {
                         Group {
                             let offsetFix = geo.size.width / 2 - GrabberV.grabberSize / 2
                             GrabberV(draggingHandle: .lower, updateValue: updateValue, width: geo.size.width)
-                                .offset(x: CGFloat(value.lowerBound / range.upperBound) * geo.size.width - offsetFix)
+                                .offset(x: CGFloat(value.lowerBound / range.upperBound) * geo.size.width - (offsetFix + GrabberV.grabberSize))
                             GrabberV(draggingHandle: .upper, updateValue: updateValue, width: geo.size.width)
                                 .offset(x: CGFloat(value.upperBound / range.upperBound) * geo.size.width - geo.size.width / 2 + GrabberV.grabberSize / 2)
                         }
