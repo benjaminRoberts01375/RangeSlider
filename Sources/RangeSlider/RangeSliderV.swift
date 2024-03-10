@@ -5,7 +5,7 @@ import SwiftUI
 
 internal enum DraggingHandle { case lower, upper }
 
-@available(iOS 13.0, *)
+@available(iOS 13.0, macOS 10.15, *)
 public struct HorizontalRangeSliderV<V: BinaryFloatingPoint>: View {
     @Binding var value: ClosedRange<V>
     let range: ClosedRange<V>
@@ -53,7 +53,7 @@ public struct HorizontalRangeSliderV<V: BinaryFloatingPoint>: View {
     }
 }
 
-@available(iOS 13.0, *)
+@available(iOS 13.0, macOS 10.15, *)
 fileprivate struct HorizontalSliderTrackV<V: BinaryFloatingPoint>: View {
     let value: ClosedRange<V>
     let range: ClosedRange<V>
@@ -76,7 +76,7 @@ fileprivate struct HorizontalSliderTrackV<V: BinaryFloatingPoint>: View {
     }
 }
 
-@available(iOS 13.0, *)
+@available(iOS 13.0, macOS 10.15, *)
 fileprivate struct GrabberV: View {
     var draggingHandle: DraggingHandle
     var updateValue: (CGFloat, CGFloat, DraggingHandle) -> Void
@@ -102,7 +102,7 @@ fileprivate struct GrabberV: View {
     }
 }
 
-@available(iOS 13.0, *)
+@available(iOS 13.0, macOS 10.15, *)
 struct ContentView_Previews : PreviewProvider {
     struct TestView: View {
         @State var baseValue: ClosedRange<Double> = 2...10
